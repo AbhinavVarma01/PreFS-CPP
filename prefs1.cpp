@@ -30,17 +30,28 @@ CONSTRAINTS:
 */
 
 // SOLUTION:
-int dominantIndex(const vector<int>& nums) {
-    if (nums.empty()) return -1;
+int dominantIndex(vector<int>& nums) {
+    int n = nums.size();
+    int maxVal = nums[0];
     int maxIndex = 0;
-    for (int i = 1; i < (int)nums.size(); ++i) {
-        if (nums[i] > nums[maxIndex]) 
-        maxIndex = i;
+    
+    // Find the largest element and its index
+    for (int i = 0; i < n; i++) {
+        if (nums[i] > maxVal) {
+            maxVal = nums[i];
+            maxIndex = i;
+        }
     }
-    for (int i = 0; i < (int)nums.size(); ++i) {
-        if (i == maxIndex) continue;
-        if (nums[maxIndex] < 2 * nums[i]) return -1;
+    
+    // Check if largest is at least twice all others
+    for (int i = 0; i < n; i++) {
+        if (i != maxIndex) {
+            if (maxVal < 2 * nums[i]) {
+                return -1;
+            }
+        }
     }
+    
     return maxIndex;
 }
 
@@ -89,21 +100,32 @@ CONSTRAINTS:
 */
 
 // SOLUTION:
-int calPoints(const vector<string>& ops) {
-    vector<int> stack;
-    for (const auto &op : ops) {
-        if (op == "C") {
-            if (!stack.empty()) stack.pop_back();
-        } else if (op == "D") {
-            if (!stack.empty()) stack.push_back(2 * stack.back());
-        } else if (op == "+") {
-            int n = stack.size();
-            if (n >= 2) stack.push_back(stack[n-1] + stack[n-2]);
-        } else {
-            stack.push_back(stoi(op));
+int calPoints(vector<string>& ops) {
+    vector<int> record;
+    
+    for (int i = 0; i < ops.size(); i++) {
+        if (ops[i] == "C") {
+            record.pop_back();
+        }
+        else if (ops[i] == "D") {
+            int last = record[record.size() - 1];
+            record.push_back(2 * last);
+        }
+        else if (ops[i] == "+") {
+            int n = record.size();
+            int sum = record[n - 1] + record[n - 2];
+            record.push_back(sum);
+        }
+        else {
+            record.push_back(stoi(ops[i]));
         }
     }
-    return accumulate(stack.begin(), stack.end(), 0);
+    
+    int total = 0;
+    for (int i = 0; i < record.size(); i++) {
+        total += record[i];
+    }
+    return total;
 }
 
 // ============================================================================
@@ -142,12 +164,19 @@ CONSTRAINTS:
 // SOLUTION:
 int divisorSubstrings(int num, int k) {
     string s = to_string(num);
-    int n = s.size(), cnt = 0;
-    for (int i = 0; i + k <= n; ++i) {
-        int val = stoi(s.substr(i, k));
-        if (val != 0 && num % val == 0) ++cnt;
+    int n = s.size();
+    int count = 0;
+    
+    for (int i = 0; i <= n - k; i++) {
+        string substring = s.substr(i, k);
+        int value = stoi(substring);
+        
+        if (value != 0 && num % value == 0) {
+            count++;
+        }
     }
-    return cnt;
+    
+    return count;
 }
 
 // ============================================================================
@@ -187,20 +216,39 @@ CONSTRAINTS:
 */
 
 // SOLUTION:
-long long hoursNeeded(const vector<int>& piles, long long speed) {
-    long long hours = 0;
-    for (int p : piles) hours += (p + speed - 1) / speed;
-    return hours;
+long long calculateHours(vector<int>& piles, long long speed) {
+    long long totalHours = 0;
+    for (int i = 0; i < piles.size(); i++) {
+        totalHours += (piles[i] + speed - 1) / speed; // Ceiling division
+    }
+    return totalHours;
 }
 
-long long minEatingSpeed(vector<int> piles, long long h) {
-    long long lo = 1, hi = *max_element(piles.begin(), piles.end());
-    while (lo < hi) {
-        long long mid = lo + (hi - lo) / 2;
-        if (hoursNeeded(piles, mid) <= h) hi = mid;
-        else lo = mid + 1;
+long long minEatingSpeed(vector<int>& piles, long long h) {
+    long long left = 1;
+    long long right = 0;
+    
+    // Find max pile as upper bound
+    for (int i = 0; i < piles.size(); i++) {
+        right = max(right, (long long)piles[i]);
     }
-    return lo;
+    
+    long long answer = right;
+    
+    // Binary search for minimum speed
+    while (left <= right) {
+        long long mid = left + (right - left) / 2;
+        long long hours = calculateHours(piles, mid);
+        
+        if (hours <= h) {
+            answer = mid;
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    
+    return answer;
 }
 
 // ============================================================================
@@ -234,14 +282,20 @@ CONSTRAINTS:
 */
 
 // SOLUTION:
-string reverseWords(const string& s) {
+string reverseWords(string s) {
     stringstream ss(s);
-    string word, out;
+    string word;
+    string result = "";
+    
     while (ss >> word) {
-        if (out.empty()) out = word;
-        else out = word + " " + out;
+        if (result == "") {
+            result = word;
+        } else {
+            result = word + " " + result;
+        }
     }
-    return out;
+    
+    return result;
 }
 
 // ============================================================================
@@ -280,15 +334,22 @@ CONSTRAINTS:
 */
 
 // SOLUTION:
-long long countHomogenous(const string& s) {
-    const long long MOD = 1e9 + 7;
-    long long res = 0, run = 1;
-    for (size_t i = 1; i < s.size(); ++i) {
-        if (s[i] == s[i-1]) ++run;
-        else run = 1;
-        res = (res + run) % MOD;
+long long countHomogenous(string s) {
+    long long MOD = 1000000007;
+    long long total = 0;
+    long long count = 1;
+    
+    for (int i = 1; i < s.size(); i++) {
+        if (s[i] == s[i - 1]) {
+            count++;
+        } else {
+            count = 1;
+        }
+        total = (total + count) % MOD;
     }
-    return (res + 1) % MOD;
+    
+    // Add 1 for the first character
+    return (total + 1) % MOD;
 }
 
 // ============================================================================
@@ -323,18 +384,32 @@ CONSTRAINTS:
 */
 
 // SOLUTION:
-long long connectSticks(vector<int> sticks) {
-    if (sticks.empty()) return 0;
-    priority_queue<long long, vector<long long>, greater<long long>> pq;
-    for (int s : sticks) pq.push(s);
-    long long cost = 0;
-    while (pq.size() > 1) {
-        long long a = pq.top(); pq.pop();
-        long long b = pq.top(); pq.pop();
-        cost += a + b;
-        pq.push(a + b);
+long long connectSticks(vector<int>& sticks) {
+    // Use min heap to always get smallest two sticks
+    priority_queue<long long, vector<long long>, greater<long long>> minHeap;
+    
+    // Add all sticks to heap
+    for (int i = 0; i < sticks.size(); i++) {
+        minHeap.push(sticks[i]);
     }
-    return cost;
+    
+    long long totalCost = 0;
+    
+    // Keep connecting until one stick remains
+    while (minHeap.size() > 1) {
+        long long first = minHeap.top();
+        minHeap.pop();
+        
+        long long second = minHeap.top();
+        minHeap.pop();
+        
+        long long cost = first + second;
+        totalCost += cost;
+        
+        minHeap.push(cost);
+    }
+    
+    return totalCost;
 }
 
 // ============================================================================
@@ -375,15 +450,25 @@ CONSTRAINTS:
 */
 
 // SOLUTION (Greedy - works for canonical coin systems):
-long long coinChangeGreedy(vector<int> coins, int amount) {
-    sort(coins.rbegin(), coins.rend());
-    long long used = 0;
-    for (int c : coins) {
-        if (amount <= 0) break;
-        used += amount / c;
-        amount %= c;
+long long coinChangeGreedy(vector<int>& coins, int amount) {
+    // Sort coins in descending order (largest first)
+    sort(coins.begin(), coins.end(), greater<int>());
+    
+    long long coinCount = 0;
+    
+    for (int i = 0; i < coins.size(); i++) {
+        if (amount == 0) break;
+        
+        int numCoins = amount / coins[i];
+        coinCount += numCoins;
+        amount = amount % coins[i];
     }
-    return amount == 0 ? used : -1;
+    
+    if (amount != 0) {
+        return -1; // Cannot make exact change
+    }
+    
+    return coinCount;
 }
 
 // ============================================================================
@@ -416,16 +501,28 @@ CONSTRAINTS:
 */
 
 // SOLUTION:
-vector<int> zigzagPrint(const vector<vector<int>>& matrix) {
+vector<int> zigzagPrint(vector<vector<int>>& matrix) {
+    vector<int> result;
     int n = matrix.size();
-    if (n == 0) return {};
+    if (n == 0) return result;
+    
     int m = matrix[0].size();
-    vector<int> out; out.reserve(n * m);
-    for (int i = 0; i < n; ++i) {
-        if (i % 2 == 0) for (int j = m-1; j >= 0; --j) out.push_back(matrix[i][j]);
-        else for (int j = 0; j < m; ++j) out.push_back(matrix[i][j]);
+    
+    for (int i = 0; i < n; i++) {
+        if (i % 2 == 0) {
+            // Even row: print right to left
+            for (int j = m - 1; j >= 0; j--) {
+                result.push_back(matrix[i][j]);
+            }
+        } else {
+            // Odd row: print left to right
+            for (int j = 0; j < m; j++) {
+                result.push_back(matrix[i][j]);
+            }
+        }
     }
-    return out;
+    
+    return result;
 }
 
 // ============================================================================
@@ -458,9 +555,13 @@ CONSTRAINTS:
 
 // SOLUTION (Josephus formula):
 int findWinner(int n, int k) {
-    int winner = 0; // zero-based
-    for (int i = 1; i <= n; ++i) winner = (winner + k) % i;
-    return winner + 1; // convert to 1-based
+    int position = 0; // Start at position 0 (0-indexed)
+    
+    for (int i = 1; i <= n; i++) {
+        position = (position + k) % i;
+    }
+    
+    return position + 1; // Convert to 1-indexed
 }
 
 // ============================================================================
@@ -499,10 +600,14 @@ CONSTRAINTS:
 */
 
 // SOLUTION:
-map<string,int> attendanceCounts(const vector<string>& names) {
-    map<string,int> counts;
-    for (auto &name : names) counts[name]++;
-    return counts;
+map<string, int> attendanceCounts(vector<string>& names) {
+    map<string, int> attendance;
+    
+    for (int i = 0; i < names.size(); i++) {
+        attendance[names[i]]++;
+    }
+    
+    return attendance;
 }
 
 // ============================================================================
@@ -545,11 +650,18 @@ CONSTRAINTS:
 
 // SOLUTION (Recursive):
 int countWaysRecursive(int n, int m) {
-    if (n == 0) return 1;
-    if (n < 0) return 0;
-    int ways = 0;
-    for (int step = 1; step <= m; ++step) ways += countWaysRecursive(n - step, m);
-    return ways;
+    // Base cases
+    if (n == 0) return 1; // One way to stay at step 0
+    if (n < 0) return 0;  // No way if we go below 0
+    
+    int totalWays = 0;
+    
+    // Try all possible jumps from 1 to m
+    for (int jump = 1; jump <= m; jump++) {
+        totalWays += countWaysRecursive(n - jump, m);
+    }
+    
+    return totalWays;
 }
 
 // ============================================================================
@@ -588,19 +700,35 @@ CONSTRAINTS:
 */
 
 // SOLUTION:
-bool lemonadeChange(const vector<int>& bills) {
-    int fives = 0, tens = 0;
-    for (int b : bills) {
-        if (b == 5) ++fives;
-        else if (b == 10) {
+bool lemonadeChange(vector<int>& bills) {
+    int fives = 0;
+    int tens = 0;
+    
+    for (int i = 0; i < bills.size(); i++) {
+        if (bills[i] == 5) {
+            fives++;
+        }
+        else if (bills[i] == 10) {
             if (fives == 0) return false;
-            --fives; ++tens;
-        } else {
-            if (tens > 0 && fives > 0) { --tens; --fives; }
-            else if (fives >= 3) fives -= 3;
-            else return false;
+            fives--;
+            tens++;
+        }
+        else { // bills[i] == 20
+            // Try to give 1 ten and 1 five
+            if (tens > 0 && fives > 0) {
+                tens--;
+                fives--;
+            }
+            // Otherwise give 3 fives
+            else if (fives >= 3) {
+                fives -= 3;
+            }
+            else {
+                return false;
+            }
         }
     }
+    
     return true;
 }
 
@@ -648,15 +776,31 @@ CONSTRAINTS:
 */
 
 // SOLUTION:
-int smallestCommonElement(const vector<vector<int>>& mat) {
-    unordered_map<int,int> freq;
+int smallestCommonElement(vector<vector<int>>& mat) {
+    unordered_map<int, int> frequency;
     int n = mat.size();
-    for (const auto &row : mat) {
-        for (int v : row) ++freq[v];
+    
+    // Count frequency of each element
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < mat[i].size(); j++) {
+            frequency[mat[i][j]]++;
+        }
     }
-    int ans = INT_MAX;
-    for (auto &p : freq) if (p.second == n) ans = min(ans, p.first);
-    return ans == INT_MAX ? -1 : ans;
+    
+    int smallest = INT_MAX;
+    
+    // Find smallest element that appears in all rows
+    for (auto it : frequency) {
+        if (it.second == n) {
+            smallest = min(smallest, it.first);
+        }
+    }
+    
+    if (smallest == INT_MAX) {
+        return -1;
+    }
+    
+    return smallest;
 }
 
 // ============================================================================
@@ -690,19 +834,35 @@ CONSTRAINTS:
 */
 
 // SOLUTION:
-int longestMountain(const vector<int>& arr) {
+int longestMountain(vector<int>& arr) {
     int n = arr.size();
     if (n < 3) return 0;
-    int best = 0;
-    for (int i = 1; i + 1 < n; ++i) {
-        if (arr[i] > arr[i-1] && arr[i] > arr[i+1]) {
-            int l = i, r = i;
-            while (l > 0 && arr[l-1] < arr[l]) --l;
-            while (r+1 < n && arr[r] > arr[r+1]) ++r;
-            best = max(best, r - l + 1);
+    
+    int maxLength = 0;
+    
+    // Check each position as potential peak
+    for (int i = 1; i < n - 1; i++) {
+        // Check if current position is a peak
+        if (arr[i] > arr[i - 1] && arr[i] > arr[i + 1]) {
+            int left = i;
+            int right = i;
+            
+            // Expand left while increasing
+            while (left > 0 && arr[left - 1] < arr[left]) {
+                left--;
+            }
+            
+            // Expand right while decreasing
+            while (right < n - 1 && arr[right] > arr[right + 1]) {
+                right++;
+            }
+            
+            int length = right - left + 1;
+            maxLength = max(maxLength, length);
         }
     }
-    return best;
+    
+    return maxLength;
 }
 
 // ============================================================================
@@ -740,14 +900,23 @@ CONSTRAINTS:
 
 // SOLUTION (Binary Search):
 long long arrangeCoins(long long n) {
-    long long lo = 0, hi = n, ans = 0;
-    while (lo <= hi) {
-        long long mid = lo + (hi - lo) / 2;
-        long long need = mid * (mid + 1) / 2;
-        if (need <= n) { ans = mid; lo = mid + 1; }
-        else hi = mid - 1;
+    long long left = 0;
+    long long right = n;
+    long long result = 0;
+    
+    while (left <= right) {
+        long long mid = left + (right - left) / 2;
+        long long coinsNeeded = mid * (mid + 1) / 2;
+        
+        if (coinsNeeded <= n) {
+            result = mid;
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
     }
-    return ans;
+    
+    return result;
 }
 
 // ============================================================================
@@ -786,13 +955,32 @@ CONSTRAINTS:
 */
 
 // SOLUTION:
-string mergeAlternately(const string& a, const string& b) {
-    string res; res.reserve(a.size() + b.size());
-    size_t i = 0, j = 0;
-    while (i < a.size() && j < b.size()) { res.push_back(a[i++]); res.push_back(b[j++]); }
-    while (i < a.size()) res.push_back(a[i++]);
-    while (j < b.size()) res.push_back(b[j++]);
-    return res;
+string mergeAlternately(string word1, string word2) {
+    string result = "";
+    int i = 0;
+    int j = 0;
+    
+    // Add characters alternately while both strings have characters
+    while (i < word1.size() && j < word2.size()) {
+        result += word1[i];
+        result += word2[j];
+        i++;
+        j++;
+    }
+    
+    // Add remaining characters from word1
+    while (i < word1.size()) {
+        result += word1[i];
+        i++;
+    }
+    
+    // Add remaining characters from word2
+    while (j < word2.size()) {
+        result += word2[j];
+        j++;
+    }
+    
+    return result;
 }
 
 // ============================================================================
@@ -833,14 +1021,33 @@ CONSTRAINTS:
 */
 
 // SOLUTION:
-int lastStoneWeight(vector<int> stones) {
-    priority_queue<int> pq(stones.begin(), stones.end());
-    while (pq.size() > 1) {
-        int a = pq.top(); pq.pop();
-        int b = pq.top(); pq.pop();
-        if (a != b) pq.push(a - b);
+int lastStoneWeight(vector<int>& stones) {
+    // Use max heap to get heaviest stones
+    priority_queue<int> maxHeap;
+    
+    // Add all stones to heap
+    for (int i = 0; i < stones.size(); i++) {
+        maxHeap.push(stones[i]);
     }
-    return pq.empty() ? 0 : pq.top();
+    
+    // Keep smashing until one or zero stones remain
+    while (maxHeap.size() > 1) {
+        int first = maxHeap.top();
+        maxHeap.pop();
+        
+        int second = maxHeap.top();
+        maxHeap.pop();
+        
+        if (first != second) {
+            maxHeap.push(first - second);
+        }
+    }
+    
+    if (maxHeap.empty()) {
+        return 0;
+    }
+    
+    return maxHeap.top();
 }
 
 // ============================================================================
@@ -879,21 +1086,40 @@ CONSTRAINTS:
 */
 
 // SOLUTION (Binary Search):
-bool canDistribute(const vector<int>& candies, long long k, long long piece) {
-    if (piece == 0) return false;
-    long long cnt = 0;
-    for (int c : candies) cnt += c / piece;
-    return cnt >= k;
+bool canGiveCandiesToAll(vector<int>& candies, long long k, long long candiesPerChild) {
+    long long childCount = 0;
+    
+    for (int i = 0; i < candies.size(); i++) {
+        childCount += candies[i] / candiesPerChild;
+    }
+    
+    return childCount >= k;
 }
 
-long long maximumCandies(const vector<int>& candies, long long k) {
-    long long lo = 1, hi = *max_element(candies.begin(), candies.end()), ans = 0;
-    while (lo <= hi) {
-        long long mid = lo + (hi - lo) / 2;
-        if (canDistribute(candies, k, mid)) { ans = mid; lo = mid + 1; }
-        else hi = mid - 1;
+long long maximumCandies(vector<int>& candies, long long k) {
+    long long left = 1;
+    long long right = 0;
+    
+    // Find maximum pile size
+    for (int i = 0; i < candies.size(); i++) {
+        right = max(right, (long long)candies[i]);
     }
-    return ans;
+    
+    long long answer = 0;
+    
+    // Binary search for maximum candies per child
+    while (left <= right) {
+        long long mid = left + (right - left) / 2;
+        
+        if (canGiveCandiesToAll(candies, k, mid)) {
+            answer = mid;
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    
+    return answer;
 }
 
 // ============================================================================
