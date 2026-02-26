@@ -121,11 +121,7 @@ int calPoints(vector<string>& ops) {
         }
     }
     
-    int total = 0;
-    for (int i = 0; i < record.size(); i++) {
-        total += record[i];
-    }
-    return total;
+    return accumulate(record.begin(), record.end(), 0);
 }
 
 // ============================================================================
@@ -226,12 +222,7 @@ long long calculateHours(vector<int>& piles, long long speed) {
 
 long long minEatingSpeed(vector<int>& piles, long long h) {
     long long left = 1;
-    long long right = 0;
-    
-    // Find max pile as upper bound
-    for (int i = 0; i < piles.size(); i++) {
-        right = max(right, (long long)piles[i]);
-    }
+    long long right = *max_element(piles.begin(), piles.end());
     
     long long answer = right;
     
@@ -1098,12 +1089,7 @@ bool canGiveCandiesToAll(vector<int>& candies, long long k, long long candiesPer
 
 long long maximumCandies(vector<int>& candies, long long k) {
     long long left = 1;
-    long long right = 0;
-    
-    // Find maximum pile size
-    for (int i = 0; i < candies.size(); i++) {
-        right = max(right, (long long)candies[i]);
-    }
+    long long right = *max_element(candies.begin(), candies.end());
     
     long long answer = 0;
     
